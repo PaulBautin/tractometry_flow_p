@@ -980,6 +980,29 @@ process Aggregate_All_Mean_Std_Per_Point {
     """
 }
 
+process Aggregate_All_Mean_Std_Per_Point_Per_Subject {
+    tag = { "Statistics" }
+    publishDir = params.statsPublishDir
+
+    input:
+    file jsons from all_mean_std_per_point_to_aggregate
+
+    output:
+    file "mean_std_per_point_per_subject.xlsx"
+    file "mean_std_per_point_per_subject.json"
+
+    script:
+    String json_list = jsons.join(", ").replace(',', '')
+    """
+    for json in $json_list
+        do scil_merge_json.py \$json \${json/.json/_avg.json} --recursive
+    done
+    scil_merge_json.py *_avg.json mean_std_per_point_per_subject.json  \
+        --recursive
+    scil_convert_json_to_xlsx.py mean_std_per_point_per_subject.json mean_std_per_point_per_subject.xlsx
+    """
+}
+
 population_mean_std_per_point
     .concat(population_lesion_load_per_point)
     .set{population_mean_std_lesion_per_point}
